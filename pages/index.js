@@ -1,7 +1,8 @@
-import WrongNetworkMessage from '../components/WrongNetworkMessage'
-import ConnectWalletButton from '../components/ConnectWalletButton'
-import TodoList from '../components/TodoList'
-
+import WrongNetworkMessage from "../components/WrongNetworkMessage";
+import ConnectWalletButton from "../components/ConnectWalletButton";
+import TodoList from "../components/TodoList";
+import { checkConnection } from "../hooks/useWeb3";
+import { useEffect, useState } from "react";
 /* 
 const tasks = [
   { id: 0, taskText: 'clean', isDeleted: false }, 
@@ -11,32 +12,82 @@ const tasks = [
 */
 
 export default function Home() {
+  const [isConnected, setIsConnected] = useState(false);
+  const [isMetaMaskFound, setIsMetaMaskFound] = useState(false);
+  const [eth, setEth] = useState({});
+  const [account, setAccounts] = useState({});
+  useEffect(()=>{
+    let provider=window.ethereum
+    provider && provider.on('accountsChanged',account=>{
+    console.log(account)
+    setAccount(account[0])
+  })
+  provider &&  provider.on('chainChanged', (chainId) => {
+    window.location.reload();
+  });
+},[])
 
   // Calls Metamask to connect wallet on clicking Connect Wallet button
-  const connectWallet = async () => {
+  useEffect(() => {
+    getConnection();
+  }, [1]);
+  const getConnection = async () => {
+    try {
+      let a = await checkConnection(window.ethereum);
+      setEth(window.ethereum);
+      
+      if (!a.error) {
+        if(a.msg=="Connected to Ganashe"){
+          setIsConnected(false)
+          setIsMetaMaskFound(false)
+          alert("Connect Genashe and reload")
+        }
+        else{
+          console.log(a)
+          setAccounts(a.accounts)
+          setIsConnected(true)
+        }
+      }
+      else{
 
-  }
+      }
+      
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const connectWallet = async () => {
+   // let accounts = await eth.request({ method: "eth_requestAccounts" });
+    console.log(accounts);
+  };
 
   // Just gets all the tasks from the contract
-  const getAllTasks = async () => {
-
-  }
+  const getAllTasks = async () => {};
 
   // Add tasks from front-end onto the blockchain
-  const addTask = async e => {
-
-  }
+  const addTask = async (e) => {};
 
   // Remove tasks from front-end by filtering it out on our "back-end" / blockchain smart contract
-  const deleteTask = key => async () => {
-
-  }
+  const deleteTask = (key) => async () => {};
 
   return (
-    <div className='bg-[#97b5fe] h-screen w-screen flex justify-center py-6'>
-      {!'is user not logged in?' ? <ConnectWalletButton /> :
-        'is this the correct network?' ? <TodoList /> : <WrongNetworkMessage />}
+    <div className="bg-[#97b5fe] h-screen w-screen flex justify-center py-6">
+      {!isMetaMaskFound ? (
+        !isConnected ? (
+          <ConnectWalletButton connectWallet={connectWallet} />
+        ) : "is this the correct network?" ? (
+          <TodoList account={account} />
+        ) : (
+          <WrongNetworkMessage />
+        )
+      ) : (
+        <button
+          className="h-[5rem] text-2xl font-bold py-3 px-12 bg-[#f1c232] rounded-lg mb-10 hover:scale-105 transition duration-500 ease-in-out"
+          // Add an onClick functionality
+        >
+          Install MetaMask
+        </button>
+      )}
     </div>
-  )
+  );
 }
-
