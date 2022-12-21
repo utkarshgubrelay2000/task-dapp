@@ -19,30 +19,23 @@ export default function Home() {
   const [contract,setContract]=useState(null)
   const [isMetaMaskFound, setIsMetaMaskFound] = useState(false);
   const [provider, setprovider] = useState(null);
-  const [account, setAccounts] = useState({});
-  const [web3Setup,setWeb3Setup]=useState(null)
-  
-  const {chainChanged,useWeb3} = useProvider()
+ const [task,setTask]=useState([])
+  const {chainChanged,useWeb3,account,web3Setup,useContractLoader} = useProvider()
   useEffect(()=>{
     let provider=window.ethereum
     setprovider(provider)
     chainChanged(provider)
-  setWeb3Setup(useWeb3(provider))
-  
+    useWeb3(provider)
     getConnection(provider)
 
 },[])
 const useContract=async ()=>{
   try {
-      
-  
-  let res=await axios.get('/contracts/TaskManager.json')
- res=res.data
- 
-  let ac2=res.abi
-  let network=res.networks[5777].address
-  let ac=new web3Setup.eth.Contract(ac2,network);
- setContract(ac)
+    if(web3Setup){
+     let a=await useContractLoader('TaskManager')
+      setContract(a)
+      console.log(a)
+    }
 
   
 } catch (error) {
@@ -50,10 +43,17 @@ const useContract=async ()=>{
 }
 }
 useEffect(()=>{
-  useContract(web3Setup)
- getAllTasks()
+  if(web3Setup){
+    useContract()
+  }
    
 },[web3Setup])
+useEffect(()=>{
+  if(contract){
+    getAllTasks()
+   }
+   
+},[contract])
 
   // Calls Metamask to connect wallet on clicking Connect Wallet button
 
@@ -68,9 +68,7 @@ useEffect(()=>{
           alert("Connect Genashe and reload")
         }
         else{
-        //  console.log(a)
-          setAccounts(a.accounts)
-       
+      
           setIsConnected(true)
         }
       }
@@ -94,16 +92,16 @@ useEffect(()=>{
   // Just gets all the tasks from the contract
   const getAllTasks = async () => {
     console.log(contract)
-    if(web3Setup && contract) {
+    if(contract) {
     
      let tasks=await contract.methods.getMTasks().call()
     console.log(tasks)
+    setTask(tasks)
     
     }
     
   };
-//getAllTasks()
-  // Add tasks from front-end onto the blockchain
+
   const addTask = async (e) => {
 if(contract){
 
@@ -121,7 +119,7 @@ if(contract){
         !isConnected ? (
           <ConnectWalletButton connectWallet={connectWallet} />
         ) : "is this the correct network?" ? (
-          <TodoList  account={account} />
+          <TodoList addTask={addTask} task={task} account={account} />
         ) : (
           <WrongNetworkMessage />
         )
