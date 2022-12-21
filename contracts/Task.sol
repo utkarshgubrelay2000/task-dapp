@@ -22,7 +22,9 @@ contract TaskManager {
 
     function CreateTask(string memory taskmsg) external {
         uint256 taskId = tasks.length;
-        tasks.push(Task(taskId, taskmsg, false));
+        bool isDeleted=false;
+        Task memory newTask= Task({taskId:taskId,msg:taskmsg,isDeleted:isDeleted});
+        tasks.push(newTask);
         users[taskId] = msg.sender;
     }
 

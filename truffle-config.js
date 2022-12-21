@@ -2,7 +2,7 @@
 module.exports = {
  
 
-  contracts_build_directory: "./src/contracts",
+  contracts_build_directory: "./public/contracts",
   networks: {
 
     development: {

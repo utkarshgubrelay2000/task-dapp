@@ -1,7 +1,7 @@
 import Navbar from './Navbar'
 import { IoMdAddCircle } from 'react-icons/io'
 
-const TodoList = ({account}) => <div className='w-[70%] bg-[#354ea3] py-4 px-9 rounded-[30px] overflow-y-scroll'>
+const TodoList = ({account,addTask}) => <div className='w-[70%] bg-[#354ea3] py-4 px-9 rounded-[30px] overflow-y-scroll'>
   <Navbar />
   <h2 className='text-4xl bolder text-white pb-8'>
     What&apos;s up, Kevin {account}
@@ -15,6 +15,7 @@ const TodoList = ({account}) => <div className='w-[70%] bg-[#354ea3] py-4 px-9 r
     />
     <IoMdAddCircle
       // Add an onClick method
+      onClick={()=>addTask()}
       className='text-[#ea0aff] text-[50px] cursor-pointer ml-[20px] mb-[10px]'
     />
   </form>

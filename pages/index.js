@@ -3,7 +3,9 @@ import ConnectWalletButton from "../components/ConnectWalletButton";
 import TodoList from "../components/TodoList";
 import { checkConnection } from "../hooks/useWeb3";
 import { useEffect, useState } from "react";
-import Web3 from "web3";
+
+import useProvider from "../hooks/useProvider";
+import axios from "axios";
 /* 
 const tasks = [
   { id: 0, taskText: 'clean', isDeleted: false }, 
@@ -14,32 +16,51 @@ const tasks = [
 
 export default function Home() {
   const [isConnected, setIsConnected] = useState(false);
+  const [contract,setContract]=useState(null)
   const [isMetaMaskFound, setIsMetaMaskFound] = useState(false);
-  const [eth, setEth] = useState({});
+  const [provider, setprovider] = useState(null);
   const [account, setAccounts] = useState({});
-  const [web3Setup,setWeb3Setup]=useState({})
+  const [web3Setup,setWeb3Setup]=useState(null)
+  
+  const {chainChanged,useWeb3} = useProvider()
   useEffect(()=>{
     let provider=window.ethereum
-    provider && provider.on('accountsChanged',account=>{
-    console.log(account)
-    setAccount(account[0])
-  })
-  provider &&  provider.on('chainChanged', (chainId) => {
-    window.location.reload();
-  });
+    setprovider(provider)
+    chainChanged(provider)
+  setWeb3Setup(useWeb3(provider))
+  
+    getConnection(provider)
+
 },[])
+const useContract=async ()=>{
+  try {
+      
+  
+  let res=await axios.get('/contracts/TaskManager.json')
+ res=res.data
+ 
+  let ac2=res.abi
+  let network=res.networks[5777].address
+  let ac=new web3Setup.eth.Contract(ac2,network);
+ setContract(ac)
+
+  
+} catch (error) {
+     console.log(error) 
+}
+}
+useEffect(()=>{
+  useContract(web3Setup)
+ getAllTasks()
+   
+},[web3Setup])
 
   // Calls Metamask to connect wallet on clicking Connect Wallet button
-  useEffect(() => {
-    let web3 = new Web3(window.ethereum);
-    setWeb3Setup(web3)
-    getConnection();
-  }, [1]);
-  const getConnection = async () => {
+
+  const getConnection = async (provi) => {
     try {
-      let a = await checkConnection(window.ethereum);
-      setEth(window.ethereum);
-      
+      let a = await checkConnection(provi);
+ 
       if (!a.error) {
         if(a.msg=="Connected to Ganashe"){
           setIsConnected(false)
@@ -47,12 +68,14 @@ export default function Home() {
           alert("Connect Genashe and reload")
         }
         else{
-          console.log(a)
+        //  console.log(a)
           setAccounts(a.accounts)
+       
           setIsConnected(true)
         }
       }
       else{
+        setIsMetaMaskFound(true)
 
       }
       
@@ -61,21 +84,33 @@ export default function Home() {
     }
   };
   const connectWallet = async () => {
-   // let accounts = await eth.request({ method: "eth_requestAccounts" });
-    console.log(accounts);
+    if(provider){
+
+      let accounts = await provider.request({ method: "eth_requestAccounts" });
+     // console.log(accounts);
+    }
   };
 
   // Just gets all the tasks from the contract
   const getAllTasks = async () => {
-    console.log(web3)
-let ac=await web3Setup.eth.getAccounts()
-
-console.log(ac)
+    console.log(contract)
+    if(web3Setup && contract) {
+    
+     let tasks=await contract.methods.getMTasks().call()
+    console.log(tasks)
+    
+    }
     
   };
-getAllTasks(web3)
+//getAllTasks()
   // Add tasks from front-end onto the blockchain
-  const addTask = async (e) => {};
+  const addTask = async (e) => {
+if(contract){
+
+  let tasks=await contract.methods.CreateTask("Hello").send({from:account})
+  console.log(tasks)
+}
+  };
 
   // Remove tasks from front-end by filtering it out on our "back-end" / blockchain smart contract
   const deleteTask = (key) => async () => {};
@@ -86,7 +121,7 @@ getAllTasks(web3)
         !isConnected ? (
           <ConnectWalletButton connectWallet={connectWallet} />
         ) : "is this the correct network?" ? (
-          <TodoList account={account} />
+          <TodoList  account={account} />
         ) : (
           <WrongNetworkMessage />
         )
