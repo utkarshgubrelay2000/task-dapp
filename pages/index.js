@@ -3,6 +3,7 @@ import ConnectWalletButton from "../components/ConnectWalletButton";
 import TodoList from "../components/TodoList";
 import { checkConnection } from "../hooks/useWeb3";
 import { useEffect, useState } from "react";
+import Web3 from "web3";
 /* 
 const tasks = [
   { id: 0, taskText: 'clean', isDeleted: false }, 
@@ -16,6 +17,7 @@ export default function Home() {
   const [isMetaMaskFound, setIsMetaMaskFound] = useState(false);
   const [eth, setEth] = useState({});
   const [account, setAccounts] = useState({});
+  const [web3Setup,setWeb3Setup]=useState({})
   useEffect(()=>{
     let provider=window.ethereum
     provider && provider.on('accountsChanged',account=>{
@@ -29,6 +31,8 @@ export default function Home() {
 
   // Calls Metamask to connect wallet on clicking Connect Wallet button
   useEffect(() => {
+    let web3 = new Web3(window.ethereum);
+    setWeb3Setup(web3)
     getConnection();
   }, [1]);
   const getConnection = async () => {
@@ -62,8 +66,14 @@ export default function Home() {
   };
 
   // Just gets all the tasks from the contract
-  const getAllTasks = async () => {};
+  const getAllTasks = async () => {
+    console.log(web3)
+let ac=await web3Setup.eth.getAccounts()
 
+console.log(ac)
+    
+  };
+getAllTasks(web3)
   // Add tasks from front-end onto the blockchain
   const addTask = async (e) => {};
 
